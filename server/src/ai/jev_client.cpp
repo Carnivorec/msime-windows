@@ -56,6 +56,10 @@ size_t Write(char *data, size_t size, size_t count, void *user)
     buffer.append(data, size * count);
     return size * count;
 }
+bool IsHttpUrl(const std::string &url)
+{
+    return url.rfind("https://", 0) == 0 || url.rfind("http://", 0) == 0;
+}
 } // namespace
 
 struct Client::Impl
@@ -80,7 +84,9 @@ Client::~Client() = default;
 std::optional<std::string> Client::Fetch(const std::string &endpoint, const std::string &token,
                                          const std::string &payload, const std::function<bool()> &cancelled)
 {
-    if (endpoint != kEndpoint || token.empty() || (cancelled && cancelled()))
+    const std::string url = endpoint.empty() ? std::string(kEndpoint) : endpoint;
+    // The official endpoint always needs a key; relays such as OpenCode Zen may not.
+    if (!IsHttpUrl(url) || (token.empty() && url == kEndpoint) || (cancelled && cancelled()))
         return std::nullopt;
     // Reuse retains TLS connections; no API key or text is logged.
     auto *easy = impl_->easy;
@@ -91,9 +97,10 @@ std::optional<std::string> Client::Fetch(const std::string &endpoint, const std:
     std::string response;
     curl_slist *raw_headers = nullptr;
     raw_headers = curl_slist_append(raw_headers, "Content-Type: application/json");
-    raw_headers = curl_slist_append(raw_headers, ("Authorization: Bearer " + token).c_str());
+    if (!token.empty())
+        raw_headers = curl_slist_append(raw_headers, ("Authorization: Bearer " + token).c_str());
     const std::unique_ptr<curl_slist, decltype(&curl_slist_free_all)> headers(raw_headers, curl_slist_free_all);
-    curl_easy_setopt(easy, CURLOPT_URL, kEndpoint);
+    curl_easy_setopt(easy, CURLOPT_URL, url.c_str());
     NetworkProxy::ApplyToCurl(easy);
     curl_easy_setopt(easy, CURLOPT_HTTPHEADER, headers.get());
     curl_easy_setopt(easy, CURLOPT_POSTFIELDS, payload.c_str());

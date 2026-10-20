@@ -36,8 +36,9 @@ AiAssistant::detail::SuggestionCache g_candidate_cache;
 std::string Fetch(const AiAssistant::Request &request, uint64_t generation, Jev::Client &jev_client)
 {
     const auto &config = request.config;
-    if (!config.enabled || config.token.empty() || config.endpoint.empty() || config.model.empty() ||
-        request.pinyin_segments.empty() || g_generation.load() != generation)
+    // Jev decides itself whether a missing token is acceptable for the configured endpoint.
+    if (!config.enabled || (config.token.empty() && config.provider != "jev") || config.endpoint.empty() ||
+        config.model.empty() || request.pinyin_segments.empty() || g_generation.load() != generation)
     {
         (void)0;
         return {};

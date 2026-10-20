@@ -521,8 +521,7 @@ struct AiPage : std::enable_shared_from_this<AiPage>
     void ApplyProviderFields()
     {
         const ProviderDefaults defaults = DefaultsOf(provider);
-        endpoint->SetText(
-            Widen(provider != "jev" && !endpoints[provider].empty() ? endpoints[provider] : defaults.endpoint));
+        endpoint->SetText(Widen(!endpoints[provider].empty() ? endpoints[provider] : defaults.endpoint));
         model->Input()->SetText(Widen(!models[provider].empty() ? models[provider] : defaults.model));
         model->Input()->SetPlaceholder(Widen(defaults.model));
     }
@@ -649,7 +648,8 @@ struct AiPage : std::enable_shared_from_this<AiPage>
             column->Add(heading);
             auto description = MakeDescription(
                 L"DeepSeek、OpenAI、SiliconFlow、Groq 均使用 OpenAI 兼容的 Chat Completions 接口。Custom "
-                L"用于接入兼容服务。Jev 使用 TypeSafe 官方 Choice 接口，将前文、拼音和最多 32 个本地候选发送给服务商。"
+                L"用于接入兼容服务。Jev 默认使用 TypeSafe 官方 Choice 接口，也可改填兼容的转发地址（如 OpenCode Zen，"
+                L"无需 Key 时 Token 留空），将前文、拼音和最多 32 个本地候选发送给服务商。"
                 L"Jev 固定选择一个候选，不使用下方的候选数量、思考强度和自定义提示词。各提供商凭据分开保存。");
             description->SetMargin({0.0f, -10.0f, 0.0f, 16.0f});
             column->Add(description);
@@ -739,13 +739,6 @@ struct AiPage : std::enable_shared_from_this<AiPage>
 
             endpoint = GridInput();
             endpoint->SetOnCommit([this](const std::wstring &text) {
-                // Jev only talks to the official endpoint; any other value would silently disable it.
-                if (provider == "jev")
-                {
-                    Write("ai_assistant.endpoint", std::string(Jev::kEndpoint));
-                    endpoint->SetText(Widen(Jev::kEndpoint));
-                    return;
-                }
                 Write("ai_assistant.endpoint", Narrow(text));
                 if (text.empty())
                     endpoint->SetText(Widen(DefaultsOf(provider).endpoint));

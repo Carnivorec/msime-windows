@@ -147,11 +147,12 @@ TEST_CASE(jev_cache_key_tracks_candidate_pool_and_order)
     REQUIRE(before != AiAssistant::detail::BuildSuggestionCacheKey(request));
 }
 
-TEST_CASE(jev_never_sends_credentials_to_a_different_endpoint_or_on_cancel)
+TEST_CASE(jev_rejects_non_http_endpoints_keyless_official_requests_and_cancel)
 {
-    REQUIRE(!Jev::Fetch("http://127.0.0.1:1", "test-only", "{}").has_value());
+    REQUIRE(!Jev::Fetch("file:///C:/Windows/win.ini", "test-only", "{}").has_value());
     REQUIRE(!Jev::Fetch(Jev::kEndpoint, "test-only", "{}", [] { return true; }).has_value());
     REQUIRE(!Jev::Fetch(Jev::kEndpoint, "", "{}").has_value());
+    REQUIRE(!Jev::Fetch("", "", "{}").has_value());
 }
 
 TEST_CASE(jev_is_builtin_but_not_a_chat_translation_model)

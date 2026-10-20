@@ -32,7 +32,9 @@ class Client
     struct Impl;
     std::unique_ptr<Impl> impl_;
 };
-// Official HTTPS endpoint only. The callback is polled while the request is in flight.
+// Empty endpoint means the official one; any other http(s) Choice-compatible endpoint is allowed.
+// The token is optional off the official endpoint, for relays that need no credential.
+// The callback is polled while the request is in flight.
 std::optional<std::string> Fetch(const std::string &endpoint, const std::string &token, const std::string &payload,
                                  const std::function<bool()> &cancelled = {});
 } // namespace Jev

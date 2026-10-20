@@ -312,7 +312,7 @@ Result Run(const Request &request)
         const auto response = Jev::Fetch(Value(request, "endpoint"), Value(request, "token"), body.dump());
         if (response && !Jev::ParseChoice(*response, candidates).empty())
             return {true, "连接成功，Jev 已返回有效候选选择。"};
-        return {false, "Jev 未返回有效选择，请检查 Key、模型、官方接口地址和网络。"};
+        return {false, "Jev 未返回有效选择，请检查 Key、模型、接口地址和网络。"};
     }
     if (request.service.rfind("translation.", 0) == 0)
         return TestTranslation(request);
